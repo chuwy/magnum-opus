@@ -1,0 +1,14 @@
+language: scala
+scala:
+- 2.12.8
+jdk:
+- oraclejdk8
+script:
+- sbt test
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: echo "ok"
+  on:
+    tags: true
+
