@@ -2,7 +2,6 @@ package me.chuwy.magnumopus.server
 
 import java.util.UUID
 
-import cats.Monad
 import cats.implicits._
 
 import doobie.util.Read
@@ -11,33 +10,28 @@ import doobie.implicits._
 import io.circe.{Decoder, Encoder, Json}
 
 object Model {
-  case class Note(content: String, id: UUID)
+  case class Note(content: String, id: UUID, stub: String)
 
-  implicit val decoder: Decoder[Note] =
+  implicit val noteDecoder: Decoder[Note] =
     Decoder.instance { cursor =>
       for {
         content <- cursor.downField("content").as[String]
+        stub <- cursor.downField("stub").as[String]
         id <- cursor.downField("id").as[UUID]
-      } yield Note(content, id)
+      } yield Note(content, id, stub)
     }
 
-  implicit val encoder: Encoder[Note] =
+  implicit val noteEncoder: Encoder[Note] =
     Encoder.instance { note =>
       Json.fromFields(List(
         "id" -> Json.fromString(note.id.toString),
+        "stub" -> Json.fromString(note.stub),
         "content" -> Json.fromString(note.content)
       ))
     }
 
-  implicit val read: Read[Note] =
-    (Read.fromGet[String], Read.fromGet[String].map(UUID.fromString)).mapN { (content, id) =>
-      Note(content, id)
+  implicit val readNote: Read[Note] =
+    (Read.fromGet[String], Read.fromGet[String].map(UUID.fromString), Read.fromGet[String]).mapN {
+      (content, id, stub) => Note(content, id, stub)
     }
-
-  trait NotesDao[F[_]] {
-    def listNotes(implicit F: Monad[F]): F[List[Note]]
-    def addNote(note: Note): F[Unit]
-    def getNoteByStub(stub: String): F[Option[Note]]
-    def getNoteById(id: UUID): F[Option[Note]]
-  }
 }

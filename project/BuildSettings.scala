@@ -2,9 +2,14 @@
 import sbt._
 import Keys._
 
-// sbt-assembly
 import sbtassembly._
 import sbtassembly.AssemblyKeys._
+
+// SBT Native Packager
+import com.typesafe.sbt.packager.Keys.{daemonUser, maintainer}
+import com.typesafe.sbt.packager.docker.{ ExecCmd, Cmd }
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
+import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport._
 
 object BuildSettings {
 
@@ -51,6 +56,24 @@ object BuildSettings {
                       |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value))
       Seq(file)
     }.taskValue
+  )
+
+  lazy val dockerSettings = Seq(
+    // Use single entrypoint script for all apps
+    Universal / sourceDirectory := new File(baseDirectory.value, "scripts"),
+    dockerRepository := Some("repo.treescale.com"),
+    dockerUsername := Some("snowplow"),
+    dockerBaseImage := "snowplow-docker-registry.bintray.io/snowplow/base-debian:0.1.0",
+    Docker / maintainer := "Anton Parkhomenko <mailbox@chuwy.me>",
+    Docker / daemonUser := "root",  // Will be gosu'ed by docker-entrypoint.sh
+    dockerEntrypoint := Seq("docker-entrypoint.sh"),
+    dockerCommands ++= Seq(
+      ExecCmd("RUN", "cp", "/opt/docker/docker-entrypoint.sh", "/usr/local/bin/"),
+      Cmd("RUN", "apt update"),
+      Cmd("RUN", "mkdir -p /usr/share/man/man7"),
+      Cmd("RUN", "apt install -y postgresql-client-9.6")
+    ),
+    dockerCmd := Seq("--help")
   )
 
   // sbt-assembly settings
