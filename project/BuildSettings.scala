@@ -19,6 +19,8 @@ object BuildSettings {
     scalaVersion := "2.12.8",
     initialCommands := "import me.chuwy.magnumopus._",
 
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
+
     scalacOptions := Seq(
       "-deprecation",
       "-encoding", "UTF-8",

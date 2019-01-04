@@ -1,22 +1,24 @@
-package me.chuwy.magnumopus.server
+package me.chuwy.magnumopus.server.notes
+
+import cats.effect.Sync
+import org.http4s.circe._
+import org.http4s.rho.RhoRoutes
+import org.http4s.rho.swagger.SwaggerSupport
 
 import cats.implicits._
-import cats.effect.Sync
 import io.circe.syntax._
-import org.http4s.rho._
-import org.http4s.rho.swagger.SwaggerSupport
-import org.http4s.circe._
-import Model._
-import Data.NotesDao
 
-object NotesRoutes {
+import Model._
+
+
+object Routes {
   /**
     *
     * @param dao Data Access Object
     * @tparam F effect performed during routing. Cannot get rid of `Sync` because of decoding
     * @return
     */
-  def build[F[_]: Sync: NotesDao]: RhoRoutes[F] =
+  def build[F[_]: Sync: DAO]: RhoRoutes[F] =
     new RhoRoutes[F] {
       private val swaggerSupport = SwaggerSupport[F]
       import swaggerSupport._
@@ -24,7 +26,7 @@ object NotesRoutes {
       "List all notes" **
         GET / "notes" |>> { () =>
         for {
-          notes <- NotesDao[F].listNotes
+          notes <- DAO[F].listNotes
           result <- Ok(notes.asJson)
         } yield result
       }
@@ -36,8 +38,12 @@ object NotesRoutes {
 
       "Create a new note" **
         POST / "notes" ^ jsonOf[F, Note] |>> {
-        note: Note => Ok("result")
+        note: Note => {
+          println(note)
+          for {
+            _ <- DAO[F].addNote(note)
+          } yield Ok(s"Added $note")
+        }
       }
     }
 }
-

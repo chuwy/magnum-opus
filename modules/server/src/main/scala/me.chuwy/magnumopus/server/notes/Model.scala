@@ -1,11 +1,10 @@
-package me.chuwy.magnumopus.server
+package me.chuwy.magnumopus.server.notes
 
 import java.util.UUID
 
 import cats.implicits._
 
 import doobie.util.Read
-import doobie.implicits._
 
 import io.circe.{Decoder, Encoder, Json}
 
